@@ -1,0 +1,6 @@
+{
+  "name": "MonoChat — Precision Monochrome Messaging",
+  "description": "A high-precision, real-time messaging workspace engineered for speed, focus, and clarity in pure monochrome.",
+  "permissions": [],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

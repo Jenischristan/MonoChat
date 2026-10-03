@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Outlet, useNavigate } from '@tanstack/react-router';
-import { Bookmark, Lock, MessageSquarePlus, Search, Send, Users, X } from 'lucide-react';
+import { Bookmark, Lock, MessageSquarePlus, Search, Send, Sparkles, Users, X, Zap } from 'lucide-react';
 import { useAuthStore } from '../stores/auth';
 import { useUIStore } from '../stores/ui';
 import { useConversations, useMarkRead } from '../queries/hooks';
@@ -13,7 +13,7 @@ import { MessageList } from '../components/chat/MessageList';
 import { MessageComposer } from '../components/chat/MessageComposer';
 import { RightInfoPanel } from '../components/panel/RightInfoPanel';
 import { ModalHost } from '../components/modals/Modals';
-import { ToastContainer, Button, MonoChatLogo } from '../components/ui/DesignSystem';
+import { ToastContainer, Button, MonoChatLogo, Kbd } from '../components/ui/DesignSystem';
 
 function getChatBackgroundStyle(chatBackground: string): React.CSSProperties {
   const bg = getChatBackgroundOption(chatBackground);
@@ -45,7 +45,7 @@ export function AppLayout() {
     <div className="h-full w-full flex bg-[var(--bg-canvas)]">
       {/* Sidebar — always visible on md+, toggled on mobile */}
       <div
-        className={`h-full w-full md:w-[320px] lg:w-[340px] shrink-0 ${
+        className={`h-full w-full md:w-[330px] lg:w-[360px] shrink-0 ${
           mobileShowChat ? 'hidden md:block' : 'block'
         }`}
       >
@@ -91,10 +91,10 @@ export function ConversationView({ conversationId }: { conversationId: string })
   if (isLoading) {
     return (
       <div className="h-full w-full flex items-center justify-center">
-        <div className="flex gap-1.5">
-          <span className="typing-dot-1 w-2 h-2 rounded-full bg-[var(--text-muted)]" />
-          <span className="typing-dot-2 w-2 h-2 rounded-full bg-[var(--text-muted)]" />
-          <span className="typing-dot-3 w-2 h-2 rounded-full bg-[var(--text-muted)]" />
+        <div className="flex gap-2">
+          <span className="typing-dot-1 w-2.5 h-2.5 rounded-full bg-[var(--text-muted)]" />
+          <span className="typing-dot-2 w-2.5 h-2.5 rounded-full bg-[var(--text-muted)]" />
+          <span className="typing-dot-3 w-2.5 h-2.5 rounded-full bg-[var(--text-muted)]" />
         </div>
       </div>
     );
@@ -103,7 +103,7 @@ export function ConversationView({ conversationId }: { conversationId: string })
   if (!conversation) {
     return (
       <div className="h-full w-full flex flex-col items-center justify-center text-center px-6">
-        <Lock className="w-8 h-8 text-[var(--text-muted)] opacity-50 mb-3" />
+        <Lock className="w-9 h-9 text-[var(--text-muted)] opacity-40 mb-3" />
         <p className="text-sm font-bold text-[var(--text-secondary)]">Conversation unavailable</p>
         <p className="text-xs text-[var(--text-muted)] mt-1">It may have been deleted, or you were removed.</p>
         <Button className="mt-4" onClick={() => navigate({ to: '/app' })}>
@@ -127,14 +127,16 @@ export function ConversationView({ conversationId }: { conversationId: string })
         )}
 
         {typing && typing.length > 0 && (
-          <div className="px-4 py-1 text-[11px] text-[var(--text-muted)] bg-[var(--bg-surface)] border-b border-[var(--border-color)] flex items-center gap-1.5">
+          <div className="px-5 py-1.5 text-xs text-[var(--text-muted)] bg-[var(--bg-surface)] border-b border-[var(--border-color)] flex items-center gap-2">
             <span className="flex gap-0.5">
-              <span className="typing-dot-1 w-1 h-1 rounded-full bg-[var(--text-secondary)] inline-block" />
-              <span className="typing-dot-2 w-1 h-1 rounded-full bg-[var(--text-secondary)] inline-block" />
-              <span className="typing-dot-3 w-1 h-1 rounded-full bg-[var(--text-secondary)] inline-block" />
+              <span className="typing-dot-1 w-1.5 h-1.5 rounded-full bg-[var(--text-secondary)] inline-block" />
+              <span className="typing-dot-2 w-1.5 h-1.5 rounded-full bg-[var(--text-secondary)] inline-block" />
+              <span className="typing-dot-3 w-1.5 h-1.5 rounded-full bg-[var(--text-secondary)] inline-block" />
             </span>
-            {typing.map((t) => t.displayName.split(' ')[0]).join(', ')}{' '}
-            {typing.length === 1 ? 'is' : 'are'} typing…
+            <span>
+              {typing.map((t) => t.displayName.split(' ')[0]).join(', ')}{' '}
+              {typing.length === 1 ? 'is' : 'are'} typing…
+            </span>
           </div>
         )}
 
@@ -149,7 +151,7 @@ export function ConversationView({ conversationId }: { conversationId: string })
 
       {/* Info panel — desktop */}
       {showPanelDesktop && (
-        <div className="hidden lg:block w-[300px] xl:w-[340px] shrink-0">
+        <div className="hidden lg:block w-[320px] xl:w-[350px] shrink-0">
           <RightInfoPanel conversation={conversation} />
         </div>
       )}
@@ -158,10 +160,10 @@ export function ConversationView({ conversationId }: { conversationId: string })
       {showPanelDesktop && (
         <div className="lg:hidden fixed inset-0 z-40 flex justify-end">
           <div
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => useUIStore.getState().toggleInfoPanel()}
           />
-          <div className="relative w-[320px] max-w-full h-full shadow-[var(--shadow-elevated)]">
+          <div className="relative w-[340px] max-w-full h-full shadow-[var(--shadow-elevated)]">
             <RightInfoPanel conversation={conversation} onClose={() => useUIStore.getState().toggleInfoPanel()} />
           </div>
         </div>
@@ -177,7 +179,7 @@ function InChatSearchStrip({ conversationId }: { conversationId: string }) {
   const setHighlighted = useChatStore((s) => s.setHighlightedMessageId);
 
   return (
-    <div className="h-12 shrink-0 flex items-center gap-2 px-3 bg-[var(--bg-surface)] border-b border-[var(--border-color)]">
+    <div className="h-12 shrink-0 flex items-center gap-2.5 px-4 bg-[var(--bg-surface)] border-b border-[var(--border-color)]">
       <Search className="w-4 h-4 text-[var(--text-muted)]" />
       <input
         autoFocus
@@ -185,7 +187,6 @@ function InChatSearchStrip({ conversationId }: { conversationId: string }) {
         onChange={(e) => {
           setQuery(e.target.value);
           if (e.target.value.trim()) {
-            // naive highlight: first match is handled by MessageList scroll
             setHighlighted(null);
             window.dispatchEvent(
               new CustomEvent('monochat:inchat-search', { detail: { conversationId, query: e.target.value } }),
@@ -193,7 +194,7 @@ function InChatSearchStrip({ conversationId }: { conversationId: string }) {
           }
         }}
         placeholder="Search in this conversation…"
-        className="flex-1 bg-transparent text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none"
+        className="flex-1 bg-transparent text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none"
       />
       <button
         type="button"
@@ -202,7 +203,7 @@ function InChatSearchStrip({ conversationId }: { conversationId: string }) {
           setQuery('');
           setHighlighted(null);
         }}
-        className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-muted)] cursor-pointer"
+        className="p-1.5 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
         aria-label="Close search"
       >
         <X className="w-4 h-4" />
@@ -214,22 +215,35 @@ function InChatSearchStrip({ conversationId }: { conversationId: string }) {
 export function EmptyChatState() {
   const openModal = useUIStore((s) => s.openModal);
   return (
-    <div className="h-full w-full flex flex-col items-center justify-center bg-[var(--bg-canvas)] text-center px-6">
-      <MonoChatLogo size="xl" className="mb-4 opacity-80" />
-      <p className="text-lg font-extrabold tracking-tight text-[var(--text-primary)]">
-        Welcome to MonoChat
-      </p>
-      <p className="text-xs text-[var(--text-muted)] mt-1.5 max-w-xs leading-relaxed">
-        Select a conversation on the left, start a direct chat, or create a group. Everything stays
-        strictly monochrome.
-      </p>
-      <div className="flex items-center gap-2 mt-5">
-        <Button onClick={() => openModal({ kind: 'new-chat', initialMode: 'direct' })}>
-          <MessageSquarePlus className="w-3.5 h-3.5" /> New chat
-        </Button>
-        <Button variant="outline" onClick={() => openModal({ kind: 'new-chat', initialMode: 'group' })}>
-          <Users className="w-3.5 h-3.5" /> New group
-        </Button>
+    <div className="h-full w-full flex flex-col items-center justify-center bg-radial-ambient text-center px-6 relative overflow-hidden bg-grid-monochrome">
+      <div className="w-full max-w-md flex flex-col items-center p-9 rounded-3xl border border-[var(--border-strong)] bg-[var(--bg-surface)]/90 backdrop-blur-2xl shadow-[var(--shadow-elevated)] relative z-10">
+        <MonoChatLogo size="lg" className="mb-6 shadow-md" />
+        <h2 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">
+          MonoChat Workspace
+        </h2>
+        <p className="text-xs text-[var(--text-secondary)] mt-2 leading-relaxed max-w-sm">
+          A high-precision real-time messaging workspace engineered for speed, focus, and clarity. Select a chat from the sidebar or start something new.
+        </p>
+
+        <div className="flex flex-wrap items-center justify-center gap-2.5 mt-7 w-full">
+          <Button onClick={() => openModal({ kind: 'new-chat', initialMode: 'direct' })} className="flex-1 min-w-[130px] h-10">
+            <MessageSquarePlus className="w-4 h-4 mr-1.5" /> Direct chat
+          </Button>
+          <Button variant="outline" onClick={() => openModal({ kind: 'new-chat', initialMode: 'group' })} className="flex-1 min-w-[130px] h-10">
+            <Users className="w-4 h-4 mr-1.5" /> New group
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-2 mt-6 text-xs text-[var(--text-muted)]">
+          <span>Search workspace anytime:</span>
+          <button
+            type="button"
+            onClick={() => openModal({ kind: 'search' })}
+            className="cursor-pointer"
+          >
+            <Kbd>⌘K</Kbd>
+          </button>
+        </div>
       </div>
     </div>
   );

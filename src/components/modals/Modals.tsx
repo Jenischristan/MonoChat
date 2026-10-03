@@ -4,17 +4,24 @@ import {
   Check,
   ChevronRight,
   Download,
+  FileText,
   Flag,
   Image as ImageIcon,
+  KeyRound,
   Link2,
+  Lock,
   LogOut,
+  Mail,
+  MessageSquare,
   Monitor,
   Search,
   Shield as ShieldIcon,
+  Sparkles,
   Trash2,
   User as UserIcon,
   Users,
   X,
+  Zap,
 } from 'lucide-react';
 import type { Conversation, Message, ThemeMode, User } from '../../types/messaging';
 import { apiFetch } from '../../lib/api';
@@ -36,6 +43,7 @@ import {
   Avatar,
   Button,
   Input,
+  Kbd,
   Modal,
   SectionLabel,
   Switch,
@@ -49,13 +57,14 @@ function GlobalSearchModal() {
   const closeModal = useUIStore((s) => s.closeModal);
   const openModal = useUIStore((s) => s.openModal);
   const currentUser = useAuthStore((s) => s.user)!;
+  const startDirect = useStartDirect();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
   const { data, isFetching } = useGlobalSearch(debounced);
 
   useEffect(() => {
-    const t = window.setTimeout(() => setDebounced(query), 260);
+    const t = window.setTimeout(() => setDebounced(query), 220);
     return () => window.clearTimeout(t);
   }, [query]);
 
@@ -65,27 +74,49 @@ function GlobalSearchModal() {
     closeModal();
   };
 
+  const handleStartDirect = (user: User) => {
+    startDirect.mutate(user.id, {
+      onSuccess: (data) => {
+        navigate({ to: '/app/c/$conversationId', params: { conversationId: data.conversation.id } });
+        closeModal();
+      },
+    });
+  };
+
   const hasResults =
     (data?.users.length || 0) + (data?.conversations.length || 0) + (data?.messages.length || 0) > 0;
 
   return (
-    <Modal open onClose={closeModal} size="lg" title="Search" subtitle="Users, conversations and messages">
-      <div className="p-4 space-y-4">
+    <Modal open onClose={closeModal} size="lg" title="Workspace Search" subtitle="Instantly jump to users, conversations, or messages">
+      <div className="p-5 space-y-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] pointer-events-none" />
           <input
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type to search everything…"
-            className="w-full h-10 pl-10 pr-3 text-sm bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-md focus:border-[var(--border-focus)] outline-none text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+            placeholder="Type to search users, conversations, and messages…"
+            className="w-full h-11 pl-10 pr-10 text-sm bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-xl focus:border-[var(--border-focus)] focus:bg-[var(--bg-surface)] outline-none text-[var(--text-primary)] placeholder:text-[var(--text-muted)] shadow-xs transition-all"
           />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        {debounced && isFetching && <p className="text-xs text-[var(--text-muted)]">Searching…</p>}
+        {debounced && isFetching && (
+          <p className="text-xs text-[var(--text-muted)] px-1">Searching…</p>
+        )}
 
         {debounced && !hasResults && !isFetching && (
-          <p className="text-xs text-[var(--text-muted)] text-center py-6">No results for “{debounced}”.</p>
+          <div className="py-12 text-center text-xs text-[var(--text-muted)]">
+            No results found for “{debounced}”. Try searching for a different keyword.
+          </div>
         )}
 
         {(data?.users.length || 0) > 0 && (
@@ -95,17 +126,15 @@ function GlobalSearchModal() {
               <button
                 key={user.id}
                 type="button"
-                onClick={() => {
-                  startDirectFor(user, navigate, closeModal);
-                }}
-                className="w-full flex items-center gap-3 px-2.5 py-2 rounded-md hover:bg-[var(--bg-hover)] text-left cursor-pointer"
+                onClick={() => handleStartDirect(user)}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[var(--bg-hover)] text-left cursor-pointer transition-colors"
               >
                 <Avatar name={user.displayName} avatarUrl={user.avatarUrl} size="sm" isOnline={user.isOnline} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold truncate">{user.displayName}</p>
+                  <p className="text-xs font-bold text-[var(--text-primary)] truncate">{user.displayName}</p>
                   <p className="text-[10px] text-[var(--text-muted)] font-mono truncate">@{user.username}</p>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />
               </button>
             ))}
           </div>
@@ -121,11 +150,11 @@ function GlobalSearchModal() {
                   key={conv.id}
                   type="button"
                   onClick={() => go(conv.id)}
-                  className="w-full flex items-center gap-3 px-2.5 py-2 rounded-md hover:bg-[var(--bg-hover)] text-left cursor-pointer"
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[var(--bg-hover)] text-left cursor-pointer transition-colors"
                 >
                   <Avatar name={display.title} avatarUrl={display.avatarUrl} size="sm" isSavedMessages={display.isSavedMessages} showPresence={false} />
-                  <p className="text-xs font-bold flex-1 truncate text-left">{display.title}</p>
-                  <ChevronRight className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                  <p className="text-xs font-bold text-[var(--text-primary)] flex-1 truncate text-left">{display.title}</p>
+                  <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />
                 </button>
               );
             })}
@@ -140,18 +169,18 @@ function GlobalSearchModal() {
                 key={msg.id}
                 type="button"
                 onClick={() => go(msg.conversationId, msg.id)}
-                className="w-full flex items-center gap-3 px-2.5 py-2 rounded-md hover:bg-[var(--bg-hover)] text-left cursor-pointer"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[var(--bg-hover)] text-left cursor-pointer transition-colors"
               >
-                <Avatar name={msg.senderName} avatarUrl={msg.senderAvatar} size="sm" showPresence={false} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-bold text-[var(--text-secondary)]">
-                    {msg.senderName} · {msg.conversationName}
-                  </p>
-                  <p className="text-xs text-[var(--text-primary)] line-clamp-1">{msg.content}</p>
+                <div className="w-8 h-8 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0">
+                  <MessageSquare className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                 </div>
-                <span className="text-[10px] text-[var(--text-muted)] shrink-0">
-                  {formatFullDateTime(msg.createdAt)}
-                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-[var(--text-primary)] truncate font-medium">{msg.content || '📎 Attachment'}</p>
+                  <p className="text-[10px] text-[var(--text-muted)] truncate">
+                    {msg.senderName} · {formatFullDateTime(msg.createdAt)}
+                  </p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />
               </button>
             ))}
           </div>
@@ -161,40 +190,27 @@ function GlobalSearchModal() {
   );
 }
 
-async function startDirectFor(
-  user: User,
-  navigate: ReturnType<typeof useNavigate>,
-  closeModal: () => void,
-) {
-  const data = await apiFetch<{ conversation: Conversation }>('/api/conversations/direct', {
-    method: 'POST',
-    body: JSON.stringify({ targetUserId: user.id }),
-  });
-  navigate({ to: '/app/c/$conversationId', params: { conversationId: data.conversation.id } });
-  closeModal();
-}
+/* ----------------------- New Conversation Modal ----------------------- */
 
-/* ------------------------- New Conversation Modal ------------------------- */
-
-function NewConversationModal({ initialMode }: { initialMode?: 'direct' | 'group' }) {
+function NewConversationModal({ initialMode = 'direct' }: { initialMode?: 'direct' | 'group' }) {
   const closeModal = useUIStore((s) => s.closeModal);
-  const navigate = useNavigate();
   const pushToast = useUIStore((s) => s.pushToast);
-  const [mode, setMode] = useState<'direct' | 'group'>(initialMode || 'direct');
+  const navigate = useNavigate();
+  const [mode, setMode] = useState<'direct' | 'group'>(initialMode);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<User[]>([]);
   const [groupName, setGroupName] = useState('');
   const [groupDescription, setGroupDescription] = useState('');
   const [busy, setBusy] = useState(false);
+
   const { data: users = [], isFetching } = useUserDirectory(search);
+  const startDirect = useStartDirect();
+  const createGroupMutation = useCreateGroup();
 
   const createDirect = async (user: User) => {
     setBusy(true);
     try {
-      const data = await apiFetch<{ conversation: Conversation }>('/api/conversations/direct', {
-        method: 'POST',
-        body: JSON.stringify({ targetUserId: user.id }),
-      });
+      const data = await startDirect.mutateAsync(user.id);
       navigate({ to: '/app/c/$conversationId', params: { conversationId: data.conversation.id } });
       closeModal();
     } catch (err: any) {
@@ -211,13 +227,10 @@ function NewConversationModal({ initialMode }: { initialMode?: 'direct' | 'group
     }
     setBusy(true);
     try {
-      const data = await apiFetch<{ conversation: Conversation }>('/api/groups', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: groupName.trim(),
-          description: groupDescription.trim(),
-          memberIds: selected.map((u) => u.id),
-        }),
+      const data = await createGroupMutation.mutateAsync({
+        name: groupName.trim(),
+        description: groupDescription.trim(),
+        memberIds: selected.map((u) => u.id),
       });
       navigate({ to: '/app/c/$conversationId', params: { conversationId: data.conversation.id } });
       closeModal();
@@ -229,28 +242,31 @@ function NewConversationModal({ initialMode }: { initialMode?: 'direct' | 'group
   };
 
   return (
-    <Modal open onClose={closeModal} title="New conversation" subtitle="Start a direct chat or assemble a group">
-      <div className="p-4 space-y-4">
-        <div className="flex gap-0.5 p-0.5 bg-[var(--bg-elevated)] rounded-md border border-[var(--border-strong)]">
+    <Modal open onClose={closeModal} title="New Conversation" subtitle="Start a direct chat or assemble a group workspace">
+      <div className="p-5 space-y-4">
+        {/* Segmented Mode Selector */}
+        <div className="flex gap-1 p-1 bg-[var(--bg-elevated)] rounded-xl border border-[var(--border-strong)]">
           {(['direct', 'group'] as const).map((m) => (
             <button
               key={m}
               type="button"
               onClick={() => setMode(m)}
-              className={`flex-1 h-8 text-xs font-bold rounded transition-colors cursor-pointer capitalize ${
-                mode === m ? 'bg-[var(--bg-inverted)] text-[var(--text-inverted)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+              className={`flex-1 h-8 text-xs font-semibold rounded-lg transition-all cursor-pointer capitalize ${
+                mode === m
+                  ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-xs border border-[var(--border-strong)] font-bold'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               }`}
             >
-              {m === 'direct' ? 'Direct chat' : 'Group'}
+              {m === 'direct' ? 'Direct chat' : 'Team group'}
             </button>
           ))}
         </div>
 
         {mode === 'group' && (
-          <div className="space-y-3">
+          <div className="space-y-3.5">
             <Input
-              label="Group name"
-              placeholder="e.g. Monochrome HQ"
+              label="Group Name"
+              placeholder="e.g. Design Systems, Project Atlas"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
               autoFocus
@@ -264,41 +280,44 @@ function NewConversationModal({ initialMode }: { initialMode?: 'direct' | 'group
               maxLength={300}
             />
             {selected.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {selected.map((u) => (
-                  <button
-                    key={u.id}
-                    type="button"
-                    onClick={() => setSelected((s) => s.filter((x) => x.id !== u.id))}
-                    className="flex items-center gap-1.5 pl-1 pr-2 py-0.5 rounded-full border border-[var(--border-strong)] bg-[var(--bg-elevated)] text-xs font-semibold cursor-pointer hover:bg-[var(--bg-hover)]"
-                  >
-                    <Avatar name={u.displayName} avatarUrl={u.avatarUrl} size="xs" showPresence={false} />
-                    {u.displayName.split(' ')[0]}
-                    <X className="w-3 h-3 text-[var(--text-muted)]" />
-                  </button>
-                ))}
+              <div className="space-y-1.5">
+                <SectionLabel>Selected ({selected.length})</SectionLabel>
+                <div className="flex flex-wrap gap-1.5">
+                  {selected.map((u) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => setSelected((s) => s.filter((x) => x.id !== u.id))}
+                      className="flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full border border-[var(--border-strong)] bg-[var(--bg-elevated)] text-xs font-semibold cursor-pointer hover:bg-[var(--bg-hover)]"
+                    >
+                      <Avatar name={u.displayName} avatarUrl={u.avatarUrl} size="xs" showPresence={false} />
+                      {u.displayName.split(' ')[0]}
+                      <X className="w-3 h-3 text-[var(--text-muted)]" />
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
-            <Button className="w-full" onClick={createGroup} loading={busy} disabled={groupName.trim().length < 2}>
-              <Users className="w-3.5 h-3.5" /> Create group {selected.length > 0 ? `with ${selected.length}` : ''}
+            <Button className="w-full h-10 mt-2" onClick={createGroup} loading={busy} disabled={groupName.trim().length < 2}>
+              <Users className="w-4 h-4 mr-2" /> Create Group {selected.length > 0 ? `(${selected.length + 1} members)` : ''}
             </Button>
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="space-y-2 pt-1">
           <SectionLabel>{mode === 'direct' ? 'Pick a person' : 'Add members'}</SectionLabel>
           <Input
-            placeholder="Search users…"
+            placeholder="Search users by name or handle…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             leftIcon={<Search className="w-3.5 h-3.5" />}
           />
-          <div className="max-h-64 overflow-y-auto space-y-0.5 -mx-1 px-1">
+          <div className="max-h-60 overflow-y-auto space-y-0.5 -mx-1 px-1">
             {isFetching && users.length === 0 && (
-              <p className="text-xs text-[var(--text-muted)] text-center py-4">Loading users…</p>
+              <p className="text-xs text-[var(--text-muted)] text-center py-6">Loading directory…</p>
             )}
             {!isFetching && users.length === 0 && (
-              <p className="text-xs text-[var(--text-muted)] text-center py-4">No users found.</p>
+              <p className="text-xs text-[var(--text-muted)] text-center py-6">No users found.</p>
             )}
             {users.map((user) => {
               const isSelected = selected.some((u) => u.id === user.id);
@@ -316,13 +335,13 @@ function NewConversationModal({ initialMode }: { initialMode?: 'direct' | 'group
                     }
                   }}
                   disabled={busy}
-                  className={`w-full flex items-center gap-3 px-2.5 py-2 rounded-md text-left transition-colors cursor-pointer ${
-                    isSelected ? 'bg-[var(--bg-active)]' : 'hover:bg-[var(--bg-hover)]'
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                    isSelected ? 'bg-[var(--bg-hover)] border border-[var(--border-strong)]' : 'hover:bg-[var(--bg-hover)]'
                   }`}
                 >
                   <Avatar name={user.displayName} avatarUrl={user.avatarUrl} size="sm" isOnline={user.isOnline} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold truncate">{user.displayName}</p>
+                    <p className="text-xs font-bold text-[var(--text-primary)] truncate">{user.displayName}</p>
                     <p className="text-[10px] text-[var(--text-muted)] truncate">
                       @{user.username}
                       {user.statusText ? ` · ${user.statusText}` : ''}
@@ -373,7 +392,7 @@ function ReportModal(props: {
           blockUser,
         }),
       });
-      pushToast({ kind: 'success', title: 'Report submitted', body: 'Our moderation team will take a look.' });
+      pushToast({ kind: 'success', title: 'Report submitted', body: 'Our moderation team will review this.' });
       closeModal();
     } catch (err: any) {
       pushToast({ kind: 'error', title: 'Report failed', body: err?.message });
@@ -383,25 +402,27 @@ function ReportModal(props: {
   };
 
   return (
-    <Modal open onClose={closeModal} title="Report" subtitle={props.targetName}>
-      <div className="p-4 space-y-4">
+    <Modal open onClose={closeModal} title="Submit Report" subtitle={props.targetName}>
+      <div className="p-5 space-y-4">
         <div className="space-y-1.5">
           <SectionLabel>Reason</SectionLabel>
-          {reasons.map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setReason(r)}
-              className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-md border transition-colors cursor-pointer ${
-                reason === r
-                  ? 'border-[var(--text-primary)] bg-[var(--bg-hover)]'
-                  : 'border-[var(--border-color)] hover:bg-[var(--bg-hover)]'
-              }`}
-            >
-              {r}
-              {reason === r && <Check className="w-3.5 h-3.5" />}
-            </button>
-          ))}
+          <div className="space-y-1">
+            {reasons.map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setReason(r)}
+                className={`w-full flex items-center justify-between px-3.5 py-2 text-xs font-semibold rounded-xl border transition-colors cursor-pointer ${
+                  reason === r
+                    ? 'border-[var(--text-primary)] bg-[var(--bg-hover)]'
+                    : 'border-[var(--border-strong)] hover:bg-[var(--bg-hover)]'
+                }`}
+              >
+                {r}
+                {reason === r && <Check className="w-4 h-4" />}
+              </button>
+            ))}
+          </div>
         </div>
         <Textarea
           label="Additional details (optional)"
@@ -418,14 +439,14 @@ function ReportModal(props: {
             description="They will no longer be able to message you."
           />
         )}
-        <div className="flex items-center gap-2 p-3 rounded-md border border-[var(--border-color)] bg-[var(--bg-elevated)]">
-          <Flag className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0" />
-          <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
-            Reports are reviewed by moderation. False reporting is discouraged.
+        <div className="flex items-center gap-2.5 p-3 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-elevated)]">
+          <Flag className="w-4 h-4 text-[var(--text-muted)] shrink-0" />
+          <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+            Reports are handled with strict privacy.
           </p>
         </div>
-        <Button className="w-full" onClick={submit} loading={busy} disabled={!reason}>
-          Submit report
+        <Button className="w-full h-10" onClick={submit} loading={busy} disabled={!reason}>
+          Submit Report
         </Button>
       </div>
     </Modal>
@@ -459,7 +480,7 @@ function ForwardMessageModal({ message }: { message: Message }) {
   };
 
   return (
-    <Modal open onClose={closeModal} title="Forward message" subtitle={message.content.slice(0, 80) || 'Attachment message'}>
+    <Modal open onClose={closeModal} title="Forward Message" subtitle={message.content.slice(0, 80) || 'Attachment message'}>
       <div className="p-4 space-y-1 max-h-96 overflow-y-auto">
         {conversations.map((conv) => {
           const display = getConversationDisplay(conv, useAuthStore.getState().user?.id || '', new Set());
@@ -469,11 +490,11 @@ function ForwardMessageModal({ message }: { message: Message }) {
               type="button"
               onClick={() => forward(conv)}
               disabled={busyId === conv.id}
-              className="w-full flex items-center gap-3 px-2.5 py-2 rounded-md hover:bg-[var(--bg-hover)] text-left cursor-pointer disabled:opacity-50"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[var(--bg-hover)] text-left cursor-pointer disabled:opacity-50"
             >
               <Avatar name={display.title} avatarUrl={display.avatarUrl} size="sm" isSavedMessages={display.isSavedMessages} showPresence={false} />
-              <p className="text-xs font-bold flex-1 truncate">{display.title}</p>
-              <ChevronRight className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+              <p className="text-xs font-bold text-[var(--text-primary)] flex-1 truncate">{display.title}</p>
+              <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />
             </button>
           );
         })}
@@ -482,31 +503,30 @@ function ForwardMessageModal({ message }: { message: Message }) {
   );
 }
 
-
 /* ----------------------------- Lightbox ----------------------------- */
 
 function ImageLightboxModal({ url, fileName }: { url: string; fileName?: string }) {
   const closeModal = useUIStore((s) => s.closeModal);
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={closeModal}>
+    <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4" onClick={closeModal}>
       <button
         type="button"
         onClick={closeModal}
-        className="absolute top-4 right-4 p-2 rounded-md bg-white/10 hover:bg-white/20 text-white cursor-pointer"
+        className="absolute top-5 right-5 p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white cursor-pointer transition-colors"
         aria-label="Close"
       >
         <X className="w-5 h-5" />
       </button>
-      <div className="max-w-[90vw] max-h-[85vh]" onClick={(e) => e.stopPropagation()}>
-        <img src={url} alt={fileName || 'Attachment'} className="max-w-full max-h-[80vh] object-contain rounded" />
-        <div className="flex items-center justify-between mt-3 text-xs text-white/80">
-          <span className="truncate">{fileName}</span>
+      <div className="max-w-[90vw] max-h-[85vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+        <img src={url} alt={fileName || 'Attachment'} className="max-w-full max-h-[78vh] object-contain rounded-2xl shadow-2xl border border-white/10" />
+        <div className="flex items-center justify-between w-full mt-4 text-xs text-white/80 px-2">
+          <span className="truncate max-w-xs">{fileName}</span>
           <a
             href={`${url}${url.includes('?') ? '&' : '?'}download=1`}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white cursor-pointer"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white cursor-pointer transition-colors"
             download
           >
-            <Download className="w-3.5 h-3.5" /> Download
+            <Download className="w-4 h-4" /> Download
           </a>
         </div>
       </div>
@@ -689,7 +709,6 @@ function SettingsModal({ initialTab }: { initialTab?: string }) {
   };
 
   const clearAllChats = async () => {
-    if (!window.confirm('Clear the message history of every conversation you belong to?')) return;
     try {
       await apiFetch('/api/users/me/clear-all-chats', { method: 'POST' });
       pushToast({ kind: 'success', title: 'All chats cleared' });
@@ -700,34 +719,36 @@ function SettingsModal({ initialTab }: { initialTab?: string }) {
   };
 
   return (
-    <Modal open onClose={closeModal} size="lg" title="Settings" headerRight={<span />}>
-      <div className="flex flex-col sm:flex-row min-h-[480px]">
-        {/* Tabs */}
-        <div className="sm:w-44 border-b sm:border-b-0 sm:border-r border-[var(--border-color)] p-2 shrink-0">
+    <Modal open onClose={closeModal} size="lg" title="Workspace Settings" subtitle="Profile, appearance, privacy, and account security" headerRight={<span />}>
+      <div className="flex flex-col sm:flex-row min-h-[500px]">
+        {/* Sidebar Tabs */}
+        <div className="sm:w-52 border-b sm:border-b-0 sm:border-r border-[var(--border-color)] p-3 shrink-0 space-y-1 bg-[var(--bg-elevated)]/50">
           {SETTINGS_TABS.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
+              className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
                 tab === t.id
-                  ? 'bg-[var(--bg-inverted)] text-[var(--text-inverted)]'
+                  ? 'bg-[var(--bg-inverted)] text-[var(--text-inverted)] shadow-xs'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
               }`}
             >
-              <t.icon className="w-3.5 h-3.5" /> {t.label}
+              <t.icon className="w-4 h-4 shrink-0" />
+              <span>{t.label}</span>
             </button>
           ))}
         </div>
 
-        <div className="flex-1 p-4 space-y-4 overflow-y-auto max-h-[60vh]">
+        {/* Content Area */}
+        <div className="flex-1 p-5 space-y-5 overflow-y-auto max-h-[65vh]">
           {tab === 'profile' && (
             <>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 pb-4 border-b border-[var(--border-subtle)]">
                 <Avatar name={currentUser.displayName} avatarUrl={currentUser.avatarUrl} size="2xl" showPresence={false} />
                 <div className="space-y-2">
                   <Button size="sm" variant="outline" onClick={() => avatarInputRef.current?.click()}>
-                    Change avatar
+                    Upload Avatar
                   </Button>
                   {currentUser.avatarUrl && (
                     <Button size="sm" variant="ghost" onClick={() => updateProfile.mutate({ avatarUrl: null })}>
@@ -747,7 +768,7 @@ function SettingsModal({ initialTab }: { initialTab?: string }) {
                   />
                 </div>
               </div>
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div className="grid sm:grid-cols-2 gap-3.5">
                 <Input label="Display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
                 <Input label="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
                 <Input label="Status" value={statusText} onChange={(e) => setStatusText(e.target.value)} />
@@ -758,7 +779,7 @@ function SettingsModal({ initialTab }: { initialTab?: string }) {
                 <Input label="Website" value={website} onChange={(e) => setWebsite(e.target.value)} />
               </div>
               <Textarea label="Bio" value={bio} onChange={(e) => setBio(e.target.value)} rows={3} maxLength={300} />
-              <Button onClick={saveProfile} loading={busy}>Save profile</Button>
+              <Button onClick={saveProfile} loading={busy} className="h-10">Save Profile</Button>
             </>
           )}
 
@@ -769,16 +790,16 @@ function SettingsModal({ initialTab }: { initialTab?: string }) {
                 <ThemeSwitcher mode={themeMode} onChange={setThemeMode} />
               </div>
               <div className="space-y-2">
-                <SectionLabel>Chat canvas</SectionLabel>
-                <div className="grid grid-cols-3 gap-2">
+                <SectionLabel>Chat Canvas Wallpaper</SectionLabel>
+                <div className="grid grid-cols-3 gap-2.5">
                   {CHAT_BACKGROUNDS.map((bg) => (
                     <button
                       key={bg.id}
                       type="button"
                       onClick={() => setChatBackground(bg.id)}
-                      className={`relative h-16 rounded-md overflow-hidden border transition-all cursor-pointer ${
+                      className={`relative h-20 rounded-xl overflow-hidden border transition-all cursor-pointer ${
                         chatBackground === bg.id
-                          ? 'border-[var(--text-primary)] ring-1 ring-[var(--text-primary)]'
+                          ? 'border-[var(--text-primary)] ring-2 ring-[var(--text-primary)]'
                           : 'border-[var(--border-strong)] hover:border-[var(--text-muted)]'
                       }`}
                     >
@@ -787,14 +808,14 @@ function SettingsModal({ initialTab }: { initialTab?: string }) {
                       ) : (
                         <span className="block w-full h-full" style={{ backgroundColor: bg.backgroundColor }} />
                       )}
-                      <span className="absolute bottom-0 inset-x-0 px-1 py-0.5 text-[9px] font-bold uppercase text-white bg-black/50 truncate">
+                      <span className="absolute bottom-0 inset-x-0 px-2 py-1 text-[10px] font-bold uppercase text-white bg-black/60 truncate">
                         {bg.name}
                       </span>
                     </button>
                   ))}
                 </div>
               </div>
-              <div className="space-y-3.5 pt-2">
+              <div className="space-y-4 pt-3 border-t border-[var(--border-subtle)]">
                 <Switch
                   checked={settings?.compactMode ?? false}
                   onChange={(v) => applySettings({ compactMode: v })}
@@ -803,15 +824,15 @@ function SettingsModal({ initialTab }: { initialTab?: string }) {
                 />
                 <div className="space-y-1.5">
                   <SectionLabel>Font size</SectionLabel>
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-2">
                     {(['small', 'medium', 'large'] as const).map((fs) => (
                       <button
                         key={fs}
                         type="button"
                         onClick={() => applySettings({ fontSize: fs })}
-                        className={`flex-1 h-8 text-xs font-semibold rounded-md border capitalize cursor-pointer ${
+                        className={`flex-1 h-8 text-xs font-semibold rounded-xl border capitalize cursor-pointer ${
                           (settings?.fontSize || 'medium') === fs
-                            ? 'bg-[var(--bg-inverted)] text-[var(--text-inverted)] border-transparent'
+                            ? 'bg-[var(--bg-inverted)] text-[var(--text-inverted)] border-transparent shadow-xs'
                             : 'border-[var(--border-strong)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
                         }`}
                       >
@@ -831,18 +852,18 @@ function SettingsModal({ initialTab }: { initialTab?: string }) {
           )}
 
           {tab === 'notifications' && (
-            <>
+            <div className="space-y-4">
               <Switch
                 checked={settings?.notificationsEnabled ?? true}
                 onChange={(v) => applySettings({ notificationsEnabled: v })}
                 label="In-app notifications"
-                description="Toast banners for new messages and invites."
+                description="Toast banners for incoming messages and invitations."
               />
               <Switch
                 checked={settings?.soundEnabled ?? true}
                 onChange={(v) => applySettings({ soundEnabled: v })}
                 label="Interface sounds"
-                description="Play a subtle sound for message events."
+                description="Play subtle audio cues for message events."
               />
               <Switch
                 checked={settings?.desktopNotifications ?? false}
@@ -853,48 +874,48 @@ function SettingsModal({ initialTab }: { initialTab?: string }) {
                   }
                 }}
                 label="Desktop notifications"
-                description="Browser-level notifications when the tab is in the background."
+                description="Receive system notifications when the window is inactive."
               />
               <Switch
                 checked={settings?.messagePreview ?? true}
                 onChange={(v) => applySettings({ messagePreview: v })}
                 label="Message preview"
-                description="Show message text inside notification banners."
+                description="Show message text snippet inside notification banners."
               />
-            </>
+            </div>
           )}
 
           {tab === 'privacy' && (
-            <>
+            <div className="space-y-4">
               <Switch
                 checked={settings?.showOnlineStatus ?? true}
                 onChange={(v) => applySettings({ showOnlineStatus: v })}
                 label="Show online status"
-                description="Others can see when you are online."
+                description="Allow other users to see your real-time presence."
               />
               <Switch
                 checked={settings?.showReadReceipts ?? true}
                 onChange={(v) => applySettings({ showReadReceipts: v })}
                 label="Read receipts"
-                description="Show others when you have read their messages."
+                description="Send confirmation when you read received messages."
               />
               <Switch
                 checked={settings?.showTypingIndicator ?? true}
                 onChange={(v) => applySettings({ showTypingIndicator: v })}
                 label="Typing indicator"
-                description="Broadcast while you are typing."
+                description="Broadcast typing status while composing."
               />
-              <div className="space-y-2 pt-2">
-                <SectionLabel>Direct messages</SectionLabel>
+              <div className="space-y-2 pt-2 border-t border-[var(--border-subtle)]">
+                <SectionLabel>Direct messages policy</SectionLabel>
                 <div className="grid grid-cols-2 gap-2">
                   {(['everyone', 'contacts'] as const).map((policy) => (
                     <button
                       key={policy}
                       type="button"
                       onClick={() => applySettings({ allowDirectMessages: policy })}
-                      className={`h-9 text-xs font-semibold rounded-md border capitalize cursor-pointer ${
+                      className={`h-9 text-xs font-semibold rounded-xl border capitalize cursor-pointer ${
                         (settings?.allowDirectMessages || 'everyone') === policy
-                          ? 'bg-[var(--bg-inverted)] text-[var(--text-inverted)] border-transparent'
+                          ? 'bg-[var(--bg-inverted)] text-[var(--text-inverted)] border-transparent shadow-xs'
                           : 'border-[var(--border-strong)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
                       }`}
                     >
@@ -903,32 +924,35 @@ function SettingsModal({ initialTab }: { initialTab?: string }) {
                   ))}
                 </div>
               </div>
-            </>
+            </div>
           )}
 
           {tab === 'sessions' && (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
+              <SectionLabel>Active Sessions</SectionLabel>
               {sessions.map((session) => (
                 <div
                   key={session.id}
-                  className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-md border border-[var(--border-color)] bg-[var(--bg-elevated)]"
+                  className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-elevated)]"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs font-bold truncate flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-bold text-[var(--text-primary)] truncate">{session.userAgent}</p>
                       {session.isCurrent && (
-                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[var(--bg-inverted)] text-[var(--text-inverted)]">
-                          This device
+                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-[var(--bg-inverted)] text-[var(--text-inverted)]">
+                          Current
                         </span>
                       )}
-                    </p>
-                    <p className="text-[11px] text-[var(--text-muted)] truncate">{session.userAgent}</p>
-                    <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
-                      Active {formatFullDateTime(session.lastActiveAt)}
+                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)] font-mono mt-0.5">
+                      Last active {formatFullDateTime(session.lastActiveAt)}
                     </p>
                   </div>
-                  <Button variant="ghost" size="xs" onClick={() => revokeSession(session.id)}>
-                    <X className="w-3 h-3" /> Revoke
-                  </Button>
+                  {!session.isCurrent && (
+                    <Button variant="ghost" size="xs" onClick={() => revokeSession(session.id)}>
+                      <X className="w-3.5 h-3.5" /> Revoke
+                    </Button>
+                  )}
                 </div>
               ))}
               {sessions.length === 0 && <p className="text-xs text-[var(--text-muted)]">Loading sessions…</p>}
@@ -936,7 +960,7 @@ function SettingsModal({ initialTab }: { initialTab?: string }) {
           )}
 
           {tab === 'account' && (
-            <>
+            <div className="space-y-5">
               <div className="space-y-3">
                 <SectionLabel>Change email</SectionLabel>
                 <Input label="New email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -947,11 +971,11 @@ function SettingsModal({ initialTab }: { initialTab?: string }) {
                   onChange={(e) => setEmailPassword(e.target.value)}
                 />
                 <Button variant="secondary" onClick={changeEmail} loading={busy} disabled={!emailPassword}>
-                  Update email
+                  Update Email
                 </Button>
               </div>
 
-              <div className="space-y-3 pt-3 border-t border-[var(--border-color)]">
+              <div className="space-y-3 pt-4 border-t border-[var(--border-subtle)]">
                 <SectionLabel>Change password</SectionLabel>
                 <Input
                   label="Current password"
@@ -967,21 +991,23 @@ function SettingsModal({ initialTab }: { initialTab?: string }) {
                   hint="Minimum 6 characters."
                 />
                 <Button variant="secondary" onClick={changePassword} loading={busy} disabled={!currentPassword || newPassword.length < 6}>
-                  Change password
+                  Change Password
                 </Button>
               </div>
 
-              <div className="space-y-3 pt-3 border-t border-[var(--border-color)]">
+              <div className="space-y-3 pt-4 border-t border-[var(--border-subtle)]">
                 <SectionLabel>Your data</SectionLabel>
-                <Button variant="outline" onClick={exportData}>
-                  <Download className="w-3.5 h-3.5" /> Export my data (JSON)
-                </Button>
-                <Button variant="outline" onClick={clearAllChats}>
-                  <Trash2 className="w-3.5 h-3.5" /> Clear all chats
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={exportData}>
+                    <Download className="w-3.5 h-3.5 mr-1.5" /> Export Data (JSON)
+                  </Button>
+                  <Button variant="outline" onClick={clearAllChats}>
+                    <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Clear All Chats
+                  </Button>
+                </div>
               </div>
 
-              <div className="space-y-3 pt-3 border-t border-[var(--border-color)]">
+              <div className="space-y-3 pt-4 border-t border-[var(--border-subtle)]">
                 <SectionLabel>Danger zone</SectionLabel>
                 <Input
                   label="Confirm password to delete account"
@@ -990,20 +1016,20 @@ function SettingsModal({ initialTab }: { initialTab?: string }) {
                   onChange={(e) => setDeletePassword(e.target.value)}
                 />
                 <Button variant="danger" onClick={deleteAccount} loading={busy} disabled={!deletePassword}>
-                  <LogOut className="w-3.5 h-3.5" /> Delete account permanently
+                  <LogOut className="w-3.5 h-3.5 mr-1.5" /> Permanently Delete Account
                 </Button>
                 <Button
                   variant="ghost"
-                  className="w-full"
+                  className="w-full mt-2"
                   onClick={async () => {
                     await logout();
                     navigate({ to: '/login' });
                   }}
                 >
-                  Sign out
+                  Sign Out
                 </Button>
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>

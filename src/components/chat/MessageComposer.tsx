@@ -14,7 +14,7 @@ import {
   useConversationMessages,
 } from '../../queries/hooks';
 
-const QUICK_EMOJIS = ['👍', '❤️', '😄', '🎉', '👀', '🙏', '😢', '🔥'];
+const QUICK_EMOJIS = ['👍', '❤️', '😄', '🎉', '👀', '🙏', '🔥', '✨', '🚀', '💯', '👏', '🤔'];
 
 function generateTempId(): string {
   return `temp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
@@ -67,10 +67,10 @@ export function MessageComposer({ conversation }: { conversation: Conversation }
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = '0px';
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
   }, [text]);
 
-  // Debounced draft persistence + conversation state sync
+  // Debounced draft persistence
   useEffect(() => {
     const timer = window.setTimeout(() => {
       if (useChatStore.getState().drafts[conversation.id] !== text) {
@@ -141,7 +141,7 @@ export function MessageComposer({ conversation }: { conversation: Conversation }
         setPendingAttachments((prev) => [...prev, attachment]);
       }
     } catch (err: any) {
-      pushToast({ kind: 'error', title: 'Upload failed', body: err?.message });
+      pushToast({ kind: 'error', title: 'Upload failed', body: err?.message || 'File upload failed.' });
     } finally {
       setUploading(false);
     }
@@ -151,8 +151,8 @@ export function MessageComposer({ conversation }: { conversation: Conversation }
 
   return (
     <div
-      className={`shrink-0 bg-[var(--bg-surface)] border-t border-[var(--border-color)] transition-colors ${
-        dragOver ? 'border-[var(--text-primary)]' : ''
+      className={`shrink-0 bg-[var(--bg-surface)] p-3 sm:p-4 border-t border-[var(--border-color)] transition-all ${
+        dragOver ? 'bg-[var(--bg-hover)]' : ''
       }`}
       onDragOver={(e) => {
         e.preventDefault();
@@ -165,10 +165,10 @@ export function MessageComposer({ conversation }: { conversation: Conversation }
         if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
       }}
     >
-      {/* Reply banner */}
+      {/* Reply Banner */}
       {replyTo && !editingMessage && (
-        <div className="flex items-center gap-2.5 mx-3 mt-2.5 px-3 py-2 rounded-md border border-[var(--border-color)] bg-[var(--bg-elevated)]">
-          <div className="w-0.5 self-stretch bg-[var(--text-secondary)]" />
+        <div className="flex items-center gap-3 mb-2.5 px-3.5 py-2 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-elevated)] fade-in-up">
+          <div className="w-1 self-stretch rounded-full bg-[var(--text-primary)]" />
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
               Replying to {replyTo.senderName}
@@ -180,7 +180,7 @@ export function MessageComposer({ conversation }: { conversation: Conversation }
           <button
             type="button"
             onClick={() => setReplyTo(conversation.id, null)}
-            className="p-1 rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] cursor-pointer"
+            className="p-1 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
             aria-label="Cancel reply"
           >
             <X className="w-3.5 h-3.5" />
@@ -188,10 +188,10 @@ export function MessageComposer({ conversation }: { conversation: Conversation }
         </div>
       )}
 
-      {/* Edit banner */}
+      {/* Edit Banner */}
       {editingMessage && editingMessage.conversationId === conversation.id && (
-        <div className="flex items-center gap-2.5 mx-3 mt-2.5 px-3 py-2 rounded-md border border-[var(--text-secondary)]/40 bg-[var(--bg-elevated)]">
-          <div className="w-0.5 self-stretch bg-[var(--text-primary)]" />
+        <div className="flex items-center gap-3 mb-2.5 px-3.5 py-2 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-elevated)] fade-in-up">
+          <div className="w-1 self-stretch rounded-full bg-[var(--text-primary)]" />
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-primary)]">
               Editing message
@@ -204,7 +204,7 @@ export function MessageComposer({ conversation }: { conversation: Conversation }
               setEditingMessage(null);
               setText('');
             }}
-            className="p-1 rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] cursor-pointer"
+            className="p-1 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
             aria-label="Cancel edit"
           >
             <X className="w-3.5 h-3.5" />
@@ -212,27 +212,27 @@ export function MessageComposer({ conversation }: { conversation: Conversation }
         </div>
       )}
 
-      {/* Pending attachments */}
+      {/* Pending Attachments */}
       {pendingAttachments.length > 0 && (
-        <div className="flex flex-wrap gap-2 mx-3 mt-2.5">
+        <div className="flex flex-wrap gap-2 mb-2.5">
           {pendingAttachments.map((att) => (
             <div
               key={att.id}
-              className="relative flex items-center gap-2 pl-2 pr-7 py-1.5 rounded-md border border-[var(--border-strong)] bg-[var(--bg-elevated)] max-w-[220px]"
+              className="relative flex items-center gap-2.5 pl-2.5 pr-8 py-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-elevated)] max-w-[240px] shadow-xs"
             >
               {att.fileType === 'image' ? (
-                <img src={att.url} alt={att.fileName} className="w-8 h-8 rounded object-cover" />
+                <img src={att.url} alt={att.fileName} className="w-8 h-8 rounded-lg object-cover" />
               ) : (
-                <Paperclip className="w-4 h-4 text-[var(--text-muted)]" />
+                <Paperclip className="w-4 h-4 text-[var(--text-muted)] shrink-0" />
               )}
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold truncate">{att.fileName}</p>
-                <p className="text-[10px] text-[var(--text-muted)]">{formatFileSize(att.fileSize)}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium truncate">{att.fileName}</p>
+                <p className="text-[10px] text-[var(--text-muted)] font-mono">{formatFileSize(att.fileSize)}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setPendingAttachments((prev) => prev.filter((a) => a.id !== att.id))}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] cursor-pointer"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
                 aria-label={`Remove ${att.fileName}`}
               >
                 <X className="w-3 h-3" />
@@ -242,8 +242,8 @@ export function MessageComposer({ conversation }: { conversation: Conversation }
         </div>
       )}
 
-      {/* Input row */}
-      <div className="flex items-end gap-1.5 p-2.5 sm:p-3">
+      {/* Main Composer Box */}
+      <div className="relative flex items-end gap-2 p-2 bg-[var(--bg-elevated)] border border-[var(--border-strong)] focus-within:border-[var(--border-focus)] rounded-2xl shadow-xs transition-all">
         <input
           ref={fileInputRef}
           type="file"
@@ -254,48 +254,51 @@ export function MessageComposer({ conversation }: { conversation: Conversation }
             e.target.value = '';
           }}
         />
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="p-2.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer disabled:opacity-50"
-          title="Attach files"
-          aria-label="Attach files"
-        >
-          {uploading ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <Paperclip className="w-4.5 h-4.5" />}
-        </button>
 
-        <div className="relative">
+        <div className="flex items-center gap-0.5 self-end pb-0.5">
           <button
             type="button"
-            onClick={() => setShowEmoji((v) => !v)}
-            className="p-2.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
-            title="Emoji"
-            aria-label="Insert emoji"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="p-2 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer disabled:opacity-50"
+            title="Attach file or photo"
+            aria-label="Attach file"
           >
-            <Smile className="w-4.5 h-4.5" />
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
           </button>
-          {showEmoji && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowEmoji(false)} />
-              <div className="absolute bottom-11 left-0 z-50 grid grid-cols-4 gap-0.5 p-2 bg-[var(--bg-surface)] border border-[var(--border-strong)] rounded-lg shadow-[var(--shadow-elevated)] fade-in-up">
-                {QUICK_EMOJIS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    onClick={() => {
-                      setText((t) => t + emoji);
-                      setShowEmoji(false);
-                      textareaRef.current?.focus();
-                    }}
-                    className="w-8 h-8 flex items-center justify-center text-lg rounded hover:bg-[var(--bg-hover)] cursor-pointer"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowEmoji((v) => !v)}
+              className="p-2 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+              title="Add emoji"
+              aria-label="Insert emoji"
+            >
+              <Smile className="w-4 h-4" />
+            </button>
+            {showEmoji && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowEmoji(false)} />
+                <div className="absolute bottom-12 left-0 z-50 grid grid-cols-6 gap-1 p-2 bg-[var(--bg-surface)] border border-[var(--border-strong)] rounded-2xl shadow-[var(--shadow-elevated)] fade-in-up backdrop-blur-md">
+                  {QUICK_EMOJIS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => {
+                        setText((t) => t + emoji);
+                        setShowEmoji(false);
+                        textareaRef.current?.focus();
+                      }}
+                      className="w-8 h-8 flex items-center justify-center text-base rounded-lg hover:bg-[var(--bg-hover)] cursor-pointer transition-transform hover:scale-115"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <textarea
@@ -313,37 +316,37 @@ export function MessageComposer({ conversation }: { conversation: Conversation }
             }
           }}
           placeholder={`Message ${conversation.name || ''}`.trim() || 'Write a message…'}
-          className="flex-1 resize-none bg-transparent text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none py-2 max-h-40"
+          className="flex-1 resize-none bg-transparent text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none py-2 px-1 max-h-44 min-h-[36px]"
           aria-label="Message input"
         />
 
-        {editingMessage ? (
+        {editingMessage && (
           <button
             type="button"
             onClick={() => {
               setEditingMessage(null);
               setText('');
             }}
-            className="p-2.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] cursor-pointer"
+            className="p-2 self-end pb-1.5 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-rose-400 cursor-pointer"
             title="Cancel edit"
             aria-label="Cancel edit"
           >
-            <Trash2 className="w-4.5 h-4.5" />
+            <Trash2 className="w-4 h-4" />
           </button>
-        ) : null}
+        )}
 
         <button
           type="button"
           onClick={submit}
           disabled={!canSend}
-          className="p-2.5 rounded-md bg-[var(--bg-inverted)] text-[var(--text-inverted)] hover:opacity-90 transition-all cursor-pointer active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
-          title={editingMessage ? 'Save changes' : 'Send message'}
+          className="h-8.5 w-8.5 self-end mb-0.5 rounded-xl bg-[var(--bg-inverted)] text-[var(--text-inverted)] hover:opacity-90 transition-all cursor-pointer flex items-center justify-center active:scale-95 disabled:opacity-30 disabled:pointer-events-none shadow-xs"
+          title={editingMessage ? 'Save changes' : 'Send message (Enter)'}
           aria-label={editingMessage ? 'Save changes' : 'Send message'}
         >
           {sendMessage.isPending ? (
-            <Loader2 className="w-4.5 h-4.5 animate-spin" />
+            <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <Send className="w-4.5 h-4.5" />
+            <Send className="w-4 h-4" />
           )}
         </button>
       </div>

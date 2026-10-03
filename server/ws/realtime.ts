@@ -5,6 +5,8 @@ import { and, eq, or } from 'drizzle-orm';
 import { getUserFromToken } from '../lib/auth';
 import { getConversationForUser } from '../lib/hydrate';
 
+import type { WebSocket as NodeWebSocket } from 'ws';
+
 export interface WsData {
   userId: string | null;
   displayName: string | null;
@@ -21,7 +23,7 @@ type BunServer = { upgrade(req: Request, options?: any): boolean };
 
 const userSockets = new Map<string, Set<ServerWebSocketLike>>();
 
-export async function tryUpgrade(req: Request, server: BunServer): Promise<Response | undefined> {
+export async function tryUpgrade(req: Request, server?: BunServer): Promise<Response | undefined> {
   const url = new URL(req.url);
   if (url.pathname !== '/ws') return undefined;
 
@@ -34,9 +36,54 @@ export async function tryUpgrade(req: Request, server: BunServer): Promise<Respo
     }
   }
 
-  const success = server.upgrade(req, { data: userData });
-  if (success) return undefined; // upgraded — Bun ignores returned response
+  if (server?.upgrade) {
+    const success = server.upgrade(req, { data: userData });
+    if (success) return undefined;
+  }
   return new Response('WebSocket upgrade failed', { status: 400 });
+}
+
+export function handleNodeWebSocketConnection(ws: NodeWebSocket, initialToken?: string | null) {
+  const socketData: WsData = {
+    userId: null,
+    displayName: null,
+    lastActivity: Date.now(),
+  };
+
+  const socketLike: ServerWebSocketLike = {
+    data: socketData,
+    send(data: string) {
+      if (ws.readyState === ws.OPEN) {
+        ws.send(data);
+      }
+    },
+    close(code?: number, reason?: string) {
+      try {
+        ws.close(code, reason);
+      } catch {
+        // ignore
+      }
+    },
+  };
+
+  if (initialToken) {
+    void (async () => {
+      const session = await getUserFromToken(initialToken);
+      if (session) {
+        socketLike.data.userId = session.user.id;
+        socketLike.data.displayName = session.user.displayName;
+        await registerSocket(socketLike, session.user.id, session.user.displayName);
+      }
+    })();
+  }
+
+  ws.on('message', (raw) => {
+    void websocketHandlers.message(socketLike, raw as any);
+  });
+
+  ws.on('close', () => {
+    websocketHandlers.close(socketLike);
+  });
 }
 
 export function getOnlineUserIds(): string[] {

@@ -5,7 +5,7 @@ node_modules/
 dist/
 
 # embedded Postgres (PGlite) data directory
-db/
+/db/
 
 # user uploaded files
 uploads/
