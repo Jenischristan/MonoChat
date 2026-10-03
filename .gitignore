@@ -1,0 +1,37 @@
+# dependencies
+node_modules/
+
+# production build output
+dist/
+
+# embedded Postgres (PGlite) data directory
+db/
+
+# user uploaded files
+uploads/
+
+# quarantined / corrupted database dirs
+db.corrupt-*/
+
+# logs
+*.log
+dev.log
+dev.out.log
+server.log
+nohup.out
+
+# misc
+.DS_Store
+*.pem
+*.tsbuildinfo
+
+# env files
+.env
+.env.*
+!.env.example
+
+# editor / tooling
+.idea/
+.vscode/
+.claude/
+.z-ai-config/

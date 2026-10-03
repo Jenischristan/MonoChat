@@ -1,0 +1,189 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg-canvas: var(--bg-canvas);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-hover: var(--bg-hover);
+  --color-bg-active: var(--bg-active);
+  --color-bg-inverted: var(--bg-inverted);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-inverted: var(--text-inverted);
+  --color-border-color: var(--border-color);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-border-focus: var(--border-focus);
+  --color-msg-out-bg: var(--msg-out-bg);
+  --color-msg-out-text: var(--msg-out-text);
+  --color-msg-out-border: var(--msg-out-border);
+  --color-msg-in-bg: var(--msg-in-bg);
+  --color-msg-in-text: var(--msg-in-text);
+  --color-msg-in-border: var(--msg-in-border);
+  --color-wallpaper-bg: var(--wallpaper-bg);
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+@layer base {
+  :root,
+  .dark {
+    --bg-canvas: #000000;
+    --bg-surface: #0A0A0A;
+    --bg-elevated: #141414;
+    --bg-hover: #1C1C1C;
+    --bg-active: #242424;
+    --bg-inverted: #FFFFFF;
+
+    --text-primary: #FFFFFF;
+    --text-secondary: #A3A3A3;
+    --text-muted: #737373;
+    --text-inverted: #000000;
+
+    --border-color: #1F1F1F;
+    --border-subtle: #161616;
+    --border-strong: #292929;
+    --border-focus: #FFFFFF;
+
+    --msg-out-bg: #242424;
+    --msg-out-text: #FFFFFF;
+    --msg-out-border: #363636;
+
+    --msg-in-bg: #141414;
+    --msg-in-text: #F5F5F5;
+    --msg-in-border: #262626;
+
+    --wallpaper-bg: #000000;
+    --wallpaper-dot: #1F1F1F;
+    --wallpaper-grid: rgba(255, 255, 255, 0.02);
+
+    --shadow-subtle: 0 2px 6px 0 rgba(0, 0, 0, 0.65);
+    --shadow-panel: 0 12px 32px -8px rgba(0, 0, 0, 0.85);
+    --shadow-elevated: 0 24px 48px -12px rgba(0, 0, 0, 0.95);
+  }
+
+  html.light {
+    --bg-canvas: #E5E5E5;
+    --bg-surface: #FAFAFA;
+    --bg-elevated: #F0F0F0;
+    --bg-hover: #E8E8E8;
+    --bg-active: #DCDCDC;
+    --bg-inverted: #0A0A0A;
+
+    --text-primary: #0A0A0A;
+    --text-secondary: #404040;
+    --text-muted: #737373;
+    --text-inverted: #FFFFFF;
+
+    --border-color: #E5E5E5;
+    --border-subtle: #EDEDED;
+    --border-strong: #D4D4D4;
+    --border-focus: #0A0A0A;
+
+    --msg-out-bg: #141414;
+    --msg-out-text: #FFFFFF;
+    --msg-out-border: #262626;
+
+    --msg-in-bg: #FFFFFF;
+    --msg-in-text: #0A0A0A;
+    --msg-in-border: #DCDCDC;
+
+    --wallpaper-bg: #EFEFEF;
+    --wallpaper-dot: #D4D4D4;
+    --wallpaper-grid: rgba(0, 0, 0, 0.03);
+
+    --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.06);
+    --shadow-panel: 0 4px 20px -4px rgba(0, 0, 0, 0.08);
+    --shadow-elevated: 0 16px 36px -8px rgba(0, 0, 0, 0.16);
+  }
+
+  * {
+    border-color: var(--border-color);
+    box-sizing: border-box;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+  }
+
+  code,
+  pre,
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+.chat-wallpaper {
+  background-color: var(--wallpaper-bg);
+}
+
+@keyframes pulse-dot {
+  0%, 80%, 100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.typing-dot-1 {
+  animation: pulse-dot 1.2s infinite ease-in-out 0s;
+}
+.typing-dot-2 {
+  animation: pulse-dot 1.2s infinite ease-in-out 0.2s;
+}
+.typing-dot-3 {
+  animation: pulse-dot 1.2s infinite ease-in-out 0.4s;
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.toast-enter {
+  animation: toast-slide-in 0.18s ease-out;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fade-in-up 0.16s ease-out;
+}
